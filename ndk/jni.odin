@@ -3,6 +3,7 @@ package ndk
 import "core:c"
 
 jboolean :: b8
+jbool :: b8
 jbyte :: u8
 jchar :: u16
 jshort :: i16
@@ -66,12 +67,8 @@ JNINativeMethod :: struct {
 	fnPtr: rawptr,
 }
 
-_JNIEnv :: struct{}
-_JavaVM :: struct{}
-C_JNIEnv :: ^JNINativeInterface
-
 JNIEnv :: ^JNINativeInterface
-JavaVM :: ^JNINativeInterface
+JavaVM :: ^JNIInvokeInterface
 
 JNINativeInterface :: struct {
 	reserved0: rawptr,
@@ -79,299 +76,300 @@ JNINativeInterface :: struct {
 	reserved2: rawptr,
 	reserved3: rawptr,
 
-	GetVersion: proc(env: ^JNIEnv) -> jint,
-	DefineClass: proc(env: ^JNIEnv, object: jobject, buffer: [^]jbyte, buffer_size: jsize) -> jclass,
-	FindClass: proc(env: ^JNIEnv, classname: cstring) -> jclass,
+	GetVersion: proc "c" (env: ^^JNINativeInterface) -> jint,
+	DefineClass: proc "c" (env: ^^JNINativeInterface, object: jobject, buffer: [^]jbyte, buffer_size: jsize) -> jclass,
+	FindClass: proc "c" (env: ^^JNINativeInterface, classname: cstring) -> jclass,
 
-	FromReflectMethod: proc(env: ^JNIEnv, object: jobject) -> jmethodID,
-	FromReflectedField: proc(env: ^JNIEnv, object: jobject) -> jfieldID,
-	ToReflectedMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, boolean: jboolean) -> jobject,
+	FromReflectMethod: proc "c" (env: ^^JNINativeInterface, object: jobject) -> jmethodID,
+	FromReflectedField: proc "c" (env: ^^JNINativeInterface, object: jobject) -> jfieldID,
+	ToReflectedMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, boolean: jboolean) -> jobject,
 
-	GetSuperClass: proc(env: ^JNIEnv, class: jclass) -> jclass,
-	IsAssignableFrom: proc(env: ^JNIEnv, class1: jclass, class2: jclass) -> jboolean,
+	GetSuperClass: proc "c" (env: ^^JNINativeInterface, class: jclass) -> jclass,
+	IsAssignableFrom: proc "c" (env: ^^JNINativeInterface, class1: jclass, class2: jclass) -> jboolean,
 
-	ToReflectedField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, boolean: jboolean) -> jobject,
+	ToReflectedField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, boolean: jboolean) -> jobject,
 
-	Throw: proc(env: ^JNIEnv, throwable: jthrowable) -> jint,
-	ThrowNew: proc(env: ^JNIEnv, class: jclass, message: cstring) -> jint,
-	ExceptionOcurred: proc(env: ^JNIEnv) -> jthrowable,
-	ExceptionDescribe: proc(env: ^JNIEnv),
-	ExceptionClear: proc(env: ^JNIEnv),
-	FatalError: proc(env: ^JNIEnv, message: cstring)
+	Throw: proc "c" (env: ^^JNINativeInterface, throwable: jthrowable) -> jint,
+	ThrowNew: proc "c" (env: ^^JNINativeInterface, class: jclass, message: cstring) -> jint,
+	ExceptionOcurred: proc "c" (env: ^^JNINativeInterface) -> jthrowable,
+	ExceptionDescribe: proc "c" (env: ^^JNINativeInterface),
+	ExceptionClear: proc "c" (env: ^^JNINativeInterface),
+	FatalError: proc "c" (env: ^^JNINativeInterface, message: cstring),
 
-	PushLocalFrame: proc(env: ^JNIEnv, capacity: jint) -> jint,
-	PopLocalFrame: proc(env: ^JNIEnv, result: jobject) -> jint,
+	PushLocalFrame: proc "c" (env: ^^JNINativeInterface, capacity: jint) -> jint,
+	PopLocalFrame: proc "c" (env: ^^JNINativeInterface, result: jobject) -> jint,
 
 
-	NewGlobalRef: proc(env: ^JNIEnv, object: jobject) -> jobject,
-	DeleteGlobalRef: proc(env: ^JNIEnv, object: jobject),
-	DeleteLocalRef: proc(env: ^JNIEnv, object: jobject),
-	IsSameObject: proc(env: ^JNIEnv, object1, object2: jobject) -> jboolean,
+	NewGlobalRef: proc "c" (env: ^^JNINativeInterface, object: jobject) -> jobject,
+	DeleteGlobalRef: proc "c" (env: ^^JNINativeInterface, object: jobject),
+	DeleteLocalRef: proc "c" (env: ^^JNINativeInterface, object: jobject),
+	IsSameObject: proc "c" (env: ^^JNINativeInterface, object1, object2: jobject) -> jboolean,
 
-	NewLocalRef: proc(env: ^JNIEnv, object: jobject) -> jobject,
-	EnsureLocalCapacity: proc(env: ^JNIEnv, capacity: jint) -> jint,
+	NewLocalRef: proc "c" (env: ^^JNINativeInterface, object: jobject) -> jobject,
+	EnsureLocalCapacity: proc "c" (env: ^^JNINativeInterface, capacity: jint) -> jint,
 
-	AllocObject: proc(env: ^JNIEnv, class: jclass) -> jobject,
-	NewObject: proc(env: ^JNIEnv, calss: jclass, method: jmethodID, #c_vararg args: ..any) -> jobject,
-	NewObjectV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, va_list: ^c.va_list) -> jobject,
-	NewObjectA: proc(env: ^JNIEnv, class: jclass, methos: jmethodID, value: ^jvalue) -> jobject,
-
-	GetObjectClass: proc(env: ^JNIEnv, object: jobject) -> jclass,
-	IsInstanceOf: proc(env: ^JNIEnv, object: jobject, class: jclass) -> jboolean,
-	GetMethodId: proc(env: ^JNIEnv, classs: jclass, name, signature: cstring) -> jmethodID,
-
-	CallObjectMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jobject,
-	CallObjectMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jobject,
-	CallObjectMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jobject,
-
-	CallBooleanMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jobject,
-	CallBooleanMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jobject,
-	CallBooleanMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jobject,
-
-	CallBooleanMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jobject,
-	CallBooleanMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jobject,
-	CallBooleanMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jobject,
-
-	CallByteMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jboolean,
-	CallByteMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jboolean,
-	CallByteMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jboolean,
-
-	CallCharMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jchar,
-	CallCharMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jchar,
-	CallCharMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jchar,
-
-	CallShortMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jshort,
-	CallShortMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jshort,
-	CallShortMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jshort,
-
-	CallIntMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jint,
-	CallIntMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jint,
-	CallIntMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jint,
-
-	CallLongMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jlong,
-	CallLongMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jlong,
-	CallLongMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jlong,
-
-	CallFloatMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jfloat,
-	CallFloatMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jfloat,
-	CallFloatMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jfloat,
-
-	CallDoubleMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jdouble,
-	CallDoubleMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jdouble,
-	CallDoubleMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue) -> jdouble,
-
-	CallVoidMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any),
-	CallVoidMethodV: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list),
-	CallVoidMethodA: proc(env: ^JNIEnv, object: jobject, method: jmethodID, valur: ^jvalue),
-
-	CallNonvirtualObjectMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jobject,
-	CallNonvirtualObjectMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jobject,
-	CallNonvirtualObjectMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue) -> jobject,
-
-	CallNonvirtualBooleanMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jboolean,
-	CallNonvirtualBooleanMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jboolean,
-	CallNonvirtualBooleanMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue) -> jboolean,
-
-	CallNonvirtualByteMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jbyte,
-	CallNonvirtualByteMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jbyte,
-	CallNonvirtualByteMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue) -> jbyte,
-
-	CallNonvirtualCharMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jchar,
-	CallNonvirtualCharMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jchar,
-	CallNonvirtualCharMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue) -> jchar,
-
-	CallNonvirtualShortMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jshort,
-	CallNonvirtualShortMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jshort,
-	CallNonvirtualShortMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue) -> jshort,
-
-	CallNonvirtualIntMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jint,
-	CallNonvirtualIntMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jint,
-	CallNonvirtualIntMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue) -> jint,
-
-	CallNonvirtualLongMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jlong,
-	CallNonvirtualLongMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jlong,
-	CallNonvirtualLongMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue) -> jlong,
-
-	CallNonvirtualFloatMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jfloat,
-	CallNonvirtualFloatMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jfloat,
-	CallNonvirtualFloatMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue) -> jfloat,
-
-	CallNonvirtualDoubleMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jdouble,
-	CallNonvirtualDoubleMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list) -> jdouble,
-	CallNonvirtualDoubleMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue) -> jdouble,
-
-	CallNonvirtualVoidMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, #c_vararg args: ..any),
-	CallNonvirtualVoidMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: ^c.va_list),
-	CallNonvirtualVoidMethod: proc(env: ^JNIEnv, object: jobject, method: jmethodID, args: [^]jvalue),
-
-	GetFieldID: proc(env: ^JNIEnv, class: jclass, name, signature: cstring) -> jfieldID,
-
-	GetObjectField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID) -> jobject,
-	GetBooleanField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID) -> jboolean,
-	GetByteField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID) -> jbyte,
-	GetCharField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID) -> jchar,
-	GetShortField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID) -> jshort,
-	GetIntField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID) -> jint,
-	GetLongField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID) -> jlong,
-	GetFloatField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID) -> jfloat,
-	GetDoubleField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID) -> jdouble,
-
-	SetObjectField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID, value: jobject),
-	SetBooleanField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID, value: jboolean),
-	SetByteField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID, value: jbyte),
-	SetCharField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID, value: jchar),
-	SetShortField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID, value: jshort),
-	SetIntField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID, value: jint),
-	SetLongField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID, value: jlong),
-	SetFloatField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID, value: jfloat),
-	SetDoubleField: proc(env: ^JNIEnv, object: jobject, jfieldId: jfieldID, value: jdouble),
-
-	GetStaticMethodId: proc(env: ^JNIEnv, class: jclass, name, signature: cstring) -> jmethodID,
-
-	CallStaticObjectMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jobject,
-	CallStaticObjectMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: ^c.va_list) -> jobject,
-	CallStaticObjectMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: [^]jvalue) -> jobject,
-
-	CallStaticBooleanMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jboolean,
-	CallStaticBooleanMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: ^c.va_list) -> jboolean,
-	CallStaticBooleanMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: [^]jvalue) -> jboolean,
-
-	CallStaticByteMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jbyte,
-	CallStaticByteMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: ^c.va_list) -> jbyte,
-	CallStaticByteMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: [^]jvalue) -> jbyte,
-
-	CallStaticCharMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jchar,
-	CallStaticCharMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: ^c.va_list) -> jchar,
-	CallStaticCharMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: [^]jvalue) -> jchar,
-
-	CallStaticShortMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jshort,
-	CallStaticShortMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: ^c.va_list) -> jshort,
-	CallStaticShortMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: [^]jvalue) -> jshort,
-
-	CallStaticIntMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jint,
-	CallStaticIntMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: ^c.va_list) -> jint,
-	CallStaticIntMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: [^]jvalue) -> jint,
-
-	CallStaticFloatMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jfloat,
-	CallStaticFloatMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: ^c.va_list) -> jfloat,
-	CallStaticFloatMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: [^]jvalue) -> jfloat,
-
-	CallStaticDoubleMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jdouble,
-	CallStaticDoubleMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: ^c.va_list) -> jdouble,
-	CallStaticDoubleMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: [^]jvalue) -> jdouble,
-
-	CallStaticVoidMethod: proc(env: ^JNIEnv, class: jclass, method: jmethodID, #c_vararg args: ..any),
-	CallStaticVoidMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: ^c.va_list),
-	CallStaticVoidMethodV: proc(env: ^JNIEnv, class: jclass, method: jmethodID, args: [^]jvalue),
-
-	GetStaticFieldID: proc(env: ^JNIEnv, class: jclass, name, signature: cstring) -> jfieldID,
-
-	GetStaticObjectField: proc(env: ^JNIEnv, class: class, field: jfieldID) -> jobject,
-	GetStaticBooleanField: proc(env: ^JNIEnv, class: class, field: jfieldID) -> jboolean,
-	GetStaticByteField: proc(env: ^JNIEnv, class: class, field: jfieldID) -> jbyte,
-	GetStaticCharField: proc(env: ^JNIEnv, class: class, field: jfieldID) -> jchar,
-	GetStaticShortField: proc(env: ^JNIEnv, class: class, field: jfieldID) -> jshort,
-	GetStaticIntField: proc(env: ^JNIEnv, class: class, field: jfieldID) -> jint,
-	GetStaticLongField: proc(env: ^JNIEnv, class: class, field: jfieldID) -> jlong,
-	GetStaticFloatField: proc(env: ^JNIEnv, class: class, field: jfieldID) -> jfloat,
-	GetStaticDoubleField: proc(env: ^JNIEnv, class: class, field: jfieldID) -> jdouble,
-
-	SetStaticObjectField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, value: jobject),
-	SetStaticBooleanField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, value: jboolean),
-	SetStaticByteField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, value: jbyte),
-	SetStaticCharField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, value: jChar),
-	SetStaticShortField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, value: jshort),
-	SetStaticIntField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, value: jint),
-	SetStaticLongField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, value: jlong),
-	SetStaticFloatField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, value: jfloat),
-	SetStaticDoubleField: proc(env: ^JNIEnv, class: jclass, field: jfieldID, value: jdouble),
-
-	NewString: proc(env: ^JNIEnv, message: [^]jchar, message_length: jsize) -> jstring,
-	GetStringLength: proc(env: ^JNIEnv, str: jstring) -> jsize,
-	GetStringsChars: proc(env: ^JNIEnv, str: jstring, isCopy: ^jboolean) -> [^]jchar,
-	ReleaseStringChars: proc(env: ^JNIEnv, str: jstring, chars: [^]jchar),
-	NewStringUTF:  proc(env: ^JNIEnv, str: cstring) -> jstring,
-	GetStringUTFLength: proc(env: ^JNIEnv, str: jstring) -> jsize,
-
-	GetStringUTFChars: proc(env: ^JNIEnv, str: jstring, isCopy: ^jboolean) -> cstring,
-	ReleaseStringUTFChars: proc(env: ^JNIEnv, str: jstring, utf: cstring),
-
-	GetArrayLength: proc(env: ^JNIEnv, array: jarray) -> jsize,
-	NewObjectArray: proc(env: ^JNIEnv, size: jsize, class: jclass, initalElement: jobject) -> jobjectArray,
-	GetObjectArrayElement: proc(env: ^JNIEnv, array: jobjectArray, index: jsize) -> jobject,
-	SetObjectArrayElement: proc(env: ^JNIEnv, array: jobjectArray, index: jsize, destinationObject: jobject)
-
-
-	NewBooleanArray: proc(env: ^JNIEnv, size: jsize) -> jbooleanArray,
-	NewByteArray: proc(env: ^JNIEnv, size: jsize) -> jbyteArray,
-	NewCharArray: proc(env: ^JNIEnv, size: jsize) -> jcharArray,
-	NewShortArray: proc(env: ^JNIEnv, size: jsize) -> jshortArray,
-	NewIntArray: proc(env: ^JNIEnv, size: jsize) -> jintArray,
-	NewLongArray: proc(env: ^JNIEnv, size: jsize) -> jlongArray,
-	NewFlaotArray: proc(env: ^JNIEnv, size: jsize) -> jfloatArray,
-	NewDoubleArray: proc(env: ^JNIEnv, size: jsize) -> jdoubleArray,
-
-	GetBooleanArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, ok: ^jboolean) -> [^]jboolean,
-	GetByteArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, ok: ^jboolean) -> [^]jbyte,
-	GetCharArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, ok: ^jboolean) -> [^]jchar,
-	GetShortArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, ok: ^jboolean) -> [^]jshort,
-	GetIntArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, ok: ^jboolean) -> [^]jint,
-	GetLongArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, ok: ^jboolean) -> [^]jlong,
-	GetFloatArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, ok: ^jboolean) -> [^]jfloat,
-	GetDoubleArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, ok: ^jboolean) -> [^]jdouble,
-
-	ReleaseBooleanArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, elems: [^]jboolean, mode: arrayReleaseMode),
-	ReleaseByteArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, elems: [^]jbyte, mode: arrayReleaseMode),
-	ReleaseCharArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, elems: [^]jchar, mode: arrayReleaseMode),
-	ReleaseShortArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, elems: [^]jshor, mode: arrayReleaseMode),
-	ReleaseIntArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, elems: [^]jint, mode: arrayReleaseMode),
-	ReleaseLongArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, elems: [^]jlong, mode: arrayReleaseMode),
-	ReleaseFloatArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, elems: [^]jflaot, mode: arrayReleaseMode),
-	ReleaseDoubleArrayElements: proc(env: ^JNIEnv, array: jbooleanArray, elems: [^]jdouble, mode: arrayReleaseMode),
-
-	GetBooleanArrayRegion: proc(env: ^JNIEnv, array: jbooleanArray, start, length: jsize, buffer: [^]jboolean),
-	GetByteArrayRegion: proc(env: ^JNIEnv, array: jbyteArray, start, length: jsize, buffer: [^]jbyte),
-	GetCharArrayRegion: proc(env: ^JNIEnv, array: jcharArray, start, length: jsize, buffer: [^]jchar),
-	GetShortArrayRegion: proc(env: ^JNIEnv, array: jshortArray, start, length: jsize, buffer: [^]jshort),
-	GetIntArrayRegion: proc(env: ^JNIEnv, array: jintArray, start, length: jsize, buffer: [^]jint),
-	GetLongArrayRegion: proc(env: ^JNIEnv, array: jlongArray, start, length: jsize, buffer: [^]jlong),
-	GetFloatArrayRegion: proc(env: ^JNIEnv, array: jfloatArray, start, length: jsize, buffer: [^]jfloat),
-	GetDoubleArrayRegion: proc(env: ^JNIEnv, array: jdoubleArray, start, length: jsize, buffer: [^]jdouble),
-
-	SetBooleanArrayRegion: proc(env: ^JNIEnv, array: jbooleanArray, start, length: jsize, buffer: [^]jboolean),
-	SetByteArrayRegion: proc(env: ^JNIEnv, array: jbyteArray, start, length: jsize, buffer: [^]jbyte),
-	SetCharArrayRegion: proc(env: ^JNIEnv, array: jcharArray, start, length: jsize, buffer: [^]jchar),
-	SetShortArrayRegion: proc(env: ^JNIEnv, array: jshortArray, start, length: jsize, buffer: [^]jshort),
-	SetIntArrayRegion: proc(env: ^JNIEnv, array: jintArray, start, length: jsize, buffer: [^]jint),
-	SetLongArrayRegion: proc(env: ^JNIEnv, array: jlongArray, start, length: jsize, buffer: [^]jlong),
-	SetFloatArrayRegion: proc(env: ^JNIEnv, array: jfloatArray, start, length: jsize, buffer: [^]jfloat),
-	SetDoubleArrayRegion: proc(env: ^JNIEnv, array: jdoubleArray, start, length: jsize, buffer: [^]jdouble),
-
-	RegisterNatives: proc(env: ^JNIEnv, class: jclass, native_methods: [^]JNINativeMethod, native_methods_count: jint) -> jint,
-	UnregisterNatives: proc(env: ^JNIJNIEnv, class: jclass) -> jint,
-	MonitorEnter: proc(env: ^JNIEnv, object: jobject) -> jint,
-	MonitorExit: proc(env: ^JNIEnv, object: jobject) -> jint,
-	GetJavaVM: proc(env: ^JNIEnv, vm: ^^JavaVM) -> jint,
-
-	GetStringRegion: proc(env: ^JNIEnv, str: jstring, start, length: jsize, buffer: [^]jchar),
-	GetStringUTFRegion: proc(env: ^JNIEnv, str: jstring, start, length: jsize, buffer: [^]char),
-
-	GetPrimitiveArrayCritical: proc(env: ^JNIEnv, array: jarray, is_copy: ^jbool) -> rawptr,
-	ReleasePrimitiveArrayCritical: proc(env: ^JNIEnv, array: jarray, c_array: [^]rawptr, mode: arrayReleaseMode),
-
-	GetStringCritical: proc(env: ^JNIEnv, str: jstring, is_copy: ^jbool) -> [^]jchar,
-	ReleaseStringCritical: proc(env: ^JNIEnv, str: jstring, c_array: [^]jchar),
-
-	NewWeakGlobalRef: proc(env: ^JNIEnv, object: jobject)  -> jweak,
-	DeleteWeakGlobalRef: proc(env: ^JNIEnv, weak_ref: jwejweak),
-
-	ExceptionCheck: proc(env: ^JNIEnv) -> jboolean,
-
-	NewDirectByteBuffer: proc(env: ^JNIEnv, address: rawptr, capacity: jlong) -> jobject,
-	GetDirectBufferAddress: proc(env: ^JNIEnv, object: jobject) -> rawptr,
-	GetDirectBufferCapacity: proc(env: ^JNIEnv, object: jobject) -> jlong,
-
-	GetObjectRefType: proc(env: ^JNIEnv, object: jobject) -> jobjectRefType
+	AllocObject: proc "c" (env: ^^JNINativeInterface, class: jclass) -> jobject,
+	NewObject: proc "c" (env: ^^JNINativeInterface, calss: jclass, method: jmethodID, #c_vararg args: ..any) -> jobject,
+	NewObjectV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, va_list: ^c.va_list) -> jobject,
+	NewObjectA: proc "c" (env: ^^JNINativeInterface, class: jclass, methos: jmethodID, value: ^jvalue) -> jobject,
+
+	GetObjectClass: proc "c" (env: ^^JNINativeInterface, object: jobject) -> jclass,
+	IsInstanceOf: proc "c" (env: ^^JNINativeInterface, object: jobject, class: jclass) -> jboolean,
+	GetMethodId: proc "c" (env: ^^JNINativeInterface, classs: jclass, name, signature: cstring) -> jmethodID,
+
+	CallObjectMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jobject,
+	CallObjectMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jobject,
+	CallObjectMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jobject,
+
+	CallBooleanMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jobject,
+	CallBooleanMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jobject,
+	CallBooleanMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jobject,
+
+
+	//CallBooleanMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jobject,
+	//CallBooleanMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jobject,
+	//CallBooleanMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jobject,
+
+	CallByteMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jboolean,
+	CallByteMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jboolean,
+	CallByteMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jboolean,
+
+	CallCharMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jchar,
+	CallCharMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jchar,
+	CallCharMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jchar,
+
+	CallShortMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jshort,
+	CallShortMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jshort,
+	CallShortMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jshort,
+
+	CallIntMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jint,
+	CallIntMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jint,
+	CallIntMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jint,
+
+	CallLongMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jlong,
+	CallLongMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jlong,
+	CallLongMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jlong,
+
+	CallFloatMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jfloat,
+	CallFloatMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jfloat,
+	CallFloatMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jfloat,
+
+	CallDoubleMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jdouble,
+	CallDoubleMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jdouble,
+	CallDoubleMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue) -> jdouble,
+
+	CallVoidMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any),
+	CallVoidMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list),
+	CallVoidMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, valur: ^jvalue),
+
+	CallNonvirtualObjectMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jobject,
+	CallNonvirtualObjectMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jobject,
+	CallNonvirtualObjectMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue) -> jobject,
+
+	CallNonvirtualBooleanMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jboolean,
+	CallNonvirtualBooleanMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jboolean,
+	CallNonvirtualBooleanMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue) -> jboolean,
+
+	CallNonvirtualByteMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jbyte,
+	CallNonvirtualByteMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jbyte,
+	CallNonvirtualByteMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue) -> jbyte,
+
+	CallNonvirtualCharMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jchar,
+	CallNonvirtualCharMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jchar,
+	CallNonvirtualCharMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue) -> jchar,
+
+	CallNonvirtualShortMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jshort,
+	CallNonvirtualShortMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jshort,
+	CallNonvirtualShortMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue) -> jshort,
+
+	CallNonvirtualIntMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jint,
+	CallNonvirtualIntMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jint,
+	CallNonvirtualIntMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue) -> jint,
+
+	CallNonvirtualLongMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jlong,
+	CallNonvirtualLongMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jlong,
+	CallNonvirtualLongMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue) -> jlong,
+
+	CallNonvirtualFloatMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jfloat,
+	CallNonvirtualFloatMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jfloat,
+	CallNonvirtualFloatMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue) -> jfloat,
+
+	CallNonvirtualDoubleMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any) -> jdouble,
+	CallNonvirtualDoubleMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list) -> jdouble,
+	CallNonvirtualDoubleMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue) -> jdouble,
+
+	CallNonvirtualVoidMethod: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, #c_vararg args: ..any),
+	CallNonvirtualVoidMethodV: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: ^c.va_list),
+	CallNonvirtualVoidMethodA: proc "c" (env: ^^JNINativeInterface, object: jobject, method: jmethodID, args: [^]jvalue),
+
+	GetFieldID: proc "c" (env: ^^JNINativeInterface, class: jclass, name, signature: cstring) -> jfieldID,
+
+	GetObjectField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID) -> jobject,
+	GetBooleanField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID) -> jboolean,
+	GetByteField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID) -> jbyte,
+	GetCharField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID) -> jchar,
+	GetShortField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID) -> jshort,
+	GetIntField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID) -> jint,
+	GetLongField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID) -> jlong,
+	GetFloatField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID) -> jfloat,
+	GetDoubleField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID) -> jdouble,
+
+	SetObjectField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID, value: jobject),
+	SetBooleanField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID, value: jboolean),
+	SetByteField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID, value: jbyte),
+	SetCharField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID, value: jchar),
+	SetShortField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID, value: jshort),
+	SetIntField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID, value: jint),
+	SetLongField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID, value: jlong),
+	SetFloatField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID, value: jfloat),
+	SetDoubleField: proc "c" (env: ^^JNINativeInterface, object: jobject, jfieldId: jfieldID, value: jdouble),
+
+	GetStaticMethodId: proc "c" (env: ^^JNINativeInterface, class: jclass, name, signature: cstring) -> jmethodID,
+
+	CallStaticObjectMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jobject,
+	CallStaticObjectMethodV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: ^c.va_list) -> jobject,
+	CallStaticObjectMethodA: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: [^]jvalue) -> jobject,
+
+	CallStaticBooleanMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jboolean,
+	CallStaticBooleanMethodV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: ^c.va_list) -> jboolean,
+	CallStaticBooleanMethodA: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: [^]jvalue) -> jboolean,
+
+	CallStaticByteMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jbyte,
+	CallStaticByteMethodV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: ^c.va_list) -> jbyte,
+	CallStaticByteMethodA: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: [^]jvalue) -> jbyte,
+
+	CallStaticCharMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jchar,
+	CallStaticCharMethodV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: ^c.va_list) -> jchar,
+	CallStaticCharMethodA: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: [^]jvalue) -> jchar,
+
+	CallStaticShortMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jshort,
+	CallStaticShortMethodV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: ^c.va_list) -> jshort,
+	CallStaticShortMethodA: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: [^]jvalue) -> jshort,
+
+	CallStaticIntMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jint,
+	CallStaticIntMethodV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: ^c.va_list) -> jint,
+	CallStaticIntMethodA: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: [^]jvalue) -> jint,
+
+	CallStaticFloatMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jfloat,
+	CallStaticFloatMethodV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: ^c.va_list) -> jfloat,
+	CallStaticFloatMethodA: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: [^]jvalue) -> jfloat,
+
+	CallStaticDoubleMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, #c_vararg args: ..any) -> jdouble,
+	CallStaticDoubleMethodV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: ^c.va_list) -> jdouble,
+	CallStaticDoubleMethodA: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: [^]jvalue) -> jdouble,
+
+	CallStaticVoidMethod: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, #c_vararg args: ..any),
+	CallStaticVoidMethodV: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: ^c.va_list),
+	CallStaticVoidMethodA: proc "c" (env: ^^JNINativeInterface, class: jclass, method: jmethodID, args: [^]jvalue),
+
+	GetStaticFieldID: proc "c" (env: ^^JNINativeInterface, class: jclass, name, signature: cstring) -> jfieldID,
+
+	GetStaticObjectField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID) -> jobject,
+	GetStaticBooleanField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID) -> jboolean,
+	GetStaticByteField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID) -> jbyte,
+	GetStaticCharField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID) -> jchar,
+	GetStaticShortField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID) -> jshort,
+	GetStaticIntField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID) -> jint,
+	GetStaticLongField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID) -> jlong,
+	GetStaticFloatField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID) -> jfloat,
+	GetStaticDoubleField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID) -> jdouble,
+
+	SetStaticObjectField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, value: jobject),
+	SetStaticBooleanField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, value: jboolean),
+	SetStaticByteField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, value: jbyte),
+	SetStaticCharField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, value: jchar),
+	SetStaticShortField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, value: jshort),
+	SetStaticIntField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, value: jint),
+	SetStaticLongField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, value: jlong),
+	SetStaticFloatField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, value: jfloat),
+	SetStaticDoubleField: proc "c" (env: ^^JNINativeInterface, class: jclass, field: jfieldID, value: jdouble),
+
+	NewString: proc "c" (env: ^^JNINativeInterface, message: [^]jchar, message_length: jsize) -> jstring,
+	GetStringLength: proc "c" (env: ^^JNINativeInterface, str: jstring) -> jsize,
+	GetStringsChars: proc "c" (env: ^^JNINativeInterface, str: jstring, isCopy: ^jboolean) -> [^]jchar,
+	ReleaseStringChars: proc "c" (env: ^^JNINativeInterface, str: jstring, chars: [^]jchar),
+	NewStringUTF:  proc "c" (env: ^^JNINativeInterface, str: cstring) -> jstring,
+	GetStringUTFLength: proc "c" (env: ^^JNINativeInterface, str: jstring) -> jsize,
+
+	GetStringUTFChars: proc "c" (env: ^^JNINativeInterface, str: jstring, isCopy: ^jboolean) -> cstring,
+	ReleaseStringUTFChars: proc "c" (env: ^^JNINativeInterface, str: jstring, utf: cstring),
+
+	GetArrayLength: proc "c" (env: ^^JNINativeInterface, array: jarray) -> jsize,
+	NewObjectArray: proc "c" (env: ^^JNINativeInterface, size: jsize, class: jclass, initalElement: jobject) -> jobjectArray,
+	GetObjectArrayElement: proc "c" (env: ^^JNINativeInterface, array: jobjectArray, index: jsize) -> jobject,
+	SetObjectArrayElement: proc "c" (env: ^^JNINativeInterface, array: jobjectArray, index: jsize, destinationObject: jobject),
+
+
+	NewBooleanArray: proc "c" (env: ^^JNINativeInterface, size: jsize) -> jbooleanArray,
+	NewByteArray: proc "c" (env: ^^JNINativeInterface, size: jsize) -> jbyteArray,
+	NewCharArray: proc "c" (env: ^^JNINativeInterface, size: jsize) -> jcharArray,
+	NewShortArray: proc "c" (env: ^^JNINativeInterface, size: jsize) -> jshortArray,
+	NewIntArray: proc "c" (env: ^^JNINativeInterface, size: jsize) -> jintArray,
+	NewLongArray: proc "c" (env: ^^JNINativeInterface, size: jsize) -> jlongArray,
+	NewFlaotArray: proc "c" (env: ^^JNINativeInterface, size: jsize) -> jfloatArray,
+	NewDoubleArray: proc "c" (env: ^^JNINativeInterface, size: jsize) -> jdoubleArray,
+
+	GetBooleanArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, ok: ^jboolean) -> [^]jboolean,
+	GetByteArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, ok: ^jboolean) -> [^]jbyte,
+	GetCharArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, ok: ^jboolean) -> [^]jchar,
+	GetShortArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, ok: ^jboolean) -> [^]jshort,
+	GetIntArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, ok: ^jboolean) -> [^]jint,
+	GetLongArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, ok: ^jboolean) -> [^]jlong,
+	GetFloatArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, ok: ^jboolean) -> [^]jfloat,
+	GetDoubleArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, ok: ^jboolean) -> [^]jdouble,
+
+	ReleaseBooleanArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, elems: [^]jboolean, mode: arrayReleaseMode),
+	ReleaseByteArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, elems: [^]jbyte, mode: arrayReleaseMode),
+	ReleaseCharArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, elems: [^]jchar, mode: arrayReleaseMode),
+	ReleaseShortArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, elems: [^]jshort, mode: arrayReleaseMode),
+	ReleaseIntArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, elems: [^]jint, mode: arrayReleaseMode),
+	ReleaseLongArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, elems: [^]jlong, mode: arrayReleaseMode),
+	ReleaseFloatArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, elems: [^]jfloat, mode: arrayReleaseMode),
+	ReleaseDoubleArrayElements: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, elems: [^]jdouble, mode: arrayReleaseMode),
+
+	GetBooleanArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, start, length: jsize, buffer: [^]jboolean),
+	GetByteArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jbyteArray, start, length: jsize, buffer: [^]jbyte),
+	GetCharArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jcharArray, start, length: jsize, buffer: [^]jchar),
+	GetShortArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jshortArray, start, length: jsize, buffer: [^]jshort),
+	GetIntArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jintArray, start, length: jsize, buffer: [^]jint),
+	GetLongArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jlongArray, start, length: jsize, buffer: [^]jlong),
+	GetFloatArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jfloatArray, start, length: jsize, buffer: [^]jfloat),
+	GetDoubleArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jdoubleArray, start, length: jsize, buffer: [^]jdouble),
+
+	SetBooleanArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jbooleanArray, start, length: jsize, buffer: [^]jboolean),
+	SetByteArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jbyteArray, start, length: jsize, buffer: [^]jbyte),
+	SetCharArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jcharArray, start, length: jsize, buffer: [^]jchar),
+	SetShortArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jshortArray, start, length: jsize, buffer: [^]jshort),
+	SetIntArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jintArray, start, length: jsize, buffer: [^]jint),
+	SetLongArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jlongArray, start, length: jsize, buffer: [^]jlong),
+	SetFloatArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jfloatArray, start, length: jsize, buffer: [^]jfloat),
+	SetDoubleArrayRegion: proc "c" (env: ^^JNINativeInterface, array: jdoubleArray, start, length: jsize, buffer: [^]jdouble),
+
+	RegisterNatives: proc "c" (env: ^^JNINativeInterface, class: jclass, native_methods: [^]JNINativeMethod, native_methods_count: jint) -> jint,
+	UnregisterNatives: proc "c" (env: ^^JNINativeInterface, class: jclass) -> jint,
+	MonitorEnter: proc "c" (env: ^^JNINativeInterface, object: jobject) -> jint,
+	MonitorExit: proc "c" (env: ^^JNINativeInterface, object: jobject) -> jint,
+	GetJavaVM: proc "c" (env: ^^JNINativeInterface, vm: ^^^JNIInvokeInterface) -> jint, // parece que o ols está achando um erro que não existe kkkk
+
+	GetStringRegion: proc "c" (env: ^^JNINativeInterface, str: jstring, start, length: jsize, buffer: [^]jchar),
+	GetStringUTFRegion: proc "c" (env: ^^JNINativeInterface, str: jstring, start, length: jsize, buffer: [^]u8),
+
+	GetPrimitiveArrayCritical: proc "c" (env: ^^JNINativeInterface, array: jarray, is_copy: ^jbool) -> rawptr,
+	ReleasePrimitiveArrayCritical: proc "c" (env: ^^JNINativeInterface, array: jarray, c_array: [^]rawptr, mode: arrayReleaseMode),
+
+	GetStringCritical: proc "c" (env: ^^JNINativeInterface, str: jstring, is_copy: ^jbool) -> [^]jchar,
+	ReleaseStringCritical: proc "c" (env: ^^JNINativeInterface, str: jstring, c_array: [^]jchar),
+
+	NewWeakGlobalRef: proc "c" (env: ^^JNINativeInterface, object: jobject)  -> jweak,
+	DeleteWeakGlobalRef: proc "c" (env: ^^JNINativeInterface, weak_ref: jweak),
+
+	ExceptionCheck: proc "c" (env: ^^JNINativeInterface) -> jboolean,
+
+	NewDirectByteBuffer: proc "c" (env: ^^JNINativeInterface, address: rawptr, capacity: jlong) -> jobject,
+	GetDirectBufferAddress: proc "c" (env: ^^JNINativeInterface, object: jobject) -> rawptr,
+	GetDirectBufferCapacity: proc "c" (env: ^^JNINativeInterface, object: jobject) -> jlong,
+
+	GetObjectRefType: proc "c" (env: ^^JNINativeInterface, object: jobject) -> jobjectRefType
 }
 
 JNIInvokeInterface :: struct {
@@ -379,11 +377,11 @@ JNIInvokeInterface :: struct {
 	reserverd1: rawptr,
 	reserverd2: rawptr,
 
-	DestroyJavaVm: proc(vm: ^JavaVM) -> jint,
-	AttachCurrentThread: proc(vm: ^JavaVM, env: ^^JNIEnv, thr_args: rawptr) -> jint,
-	DetachCurrentThread: proc(vm: ^JavaVM) -> jint,
-	GetEnv: proc(vm: ^JavaVM, env: ^^rawptr, version: jint) -> jint,
-	AttachCurrentThreadAsDaemon: proc(vm: ^JavaVM, env: ^^JNIEnv, args: rawptr) -> jint,
+	DestroyJavaVm: proc "c" (vm: ^^JNIInvokeInterface) -> jint,
+	AttachCurrentThread: proc "c" (vm: ^^JNIInvokeInterface, env: ^^^JNINativeInterface, thr_args: rawptr) -> jint,
+	DetachCurrentThread: proc "c" (vm: ^^JNIInvokeInterface) -> jint,
+	GetEnv: proc "c" (vm: ^^JNIInvokeInterface, env: ^^rawptr, version: jint) -> jint,
+	AttachCurrentThreadAsDaemon: proc "c" (vm: ^^JNIInvokeInterface, env: ^^^JNINativeInterface, args: rawptr) -> jint,
 }
 
 
@@ -401,7 +399,7 @@ JavaVMOption :: struct {
 JavaVMInitArgs :: struct {
 	version: jint,
 	nOptions: jint,
-	options: [^]JavaVmOption,
+	options: [^]JavaVMOption,
 	ignoreUnrecognized: jboolean,
 }
 
