@@ -122,5 +122,5 @@ android_app :: struct {
 	activityState: app_comand,
 	destroyRequested: i32,
 	// tem mais campos privados mas não iremos precisar deles eu acho :)
-
+	reserved: [30]u64
 }
