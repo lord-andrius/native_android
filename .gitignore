@@ -1,0 +1,4 @@
+log.txt
+build/*.apk
+build/*.idsig
+build/lib/arm64-v8a/*.so

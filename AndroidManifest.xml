@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    package="com.example.native"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+        <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="24" />
+        <application
+            android:label="native"
+            android:hasCode="false">
+                <activity
+                    android:name="android.app.NativeActivity">
+                        <meta-data
+                            android:name="android.app.lib_name"
+                            android:value="native" />
+                        <intent-filter>
+                                <action android:name="android.intent.action.MAIN" />
+                                <category android:name="android.intent.category.LAUNCHER" />
+                            </intent-filter>
+                </activity>
+        </application>
+
+</manifest>

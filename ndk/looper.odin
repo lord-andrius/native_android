@@ -95,7 +95,7 @@ foreign android {
 	ALooper_prepare :: proc(opts: looperPrepareOptions) -> ^ALooper ---
 	ALooper_acquire :: proc(looper: ^ALooper) ---
 	ALooper_release :: proc(looper: ^ALooper) ---
-	ALooper_pollOnce :: proc(timeoutMillis: i32, outFd: ^i32, outData: ^rawptr) -> i32 ---
+	ALooper_pollOnce :: proc(timeoutMillis: i32, outFd: ^i32, outEvents: ^i32, outData: ^rawptr) -> i32 ---
 	ALooper_pollAll :: proc(timeoutMillis: i32, outFd: ^i32, outData: ^rawptr) -> i32 ---
 	ALooper_wake :: proc(looper: ^ALooper) ---
 	ALooper_addFd :: proc(looper: ^ALooper, fd: i32, ident: i32, event: i32, callback: ALooper_callbackFunc, data: rawptr) -> i32 ---
