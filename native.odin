@@ -32,7 +32,8 @@ draw_screen :: proc "c" (activity: ^ndk.ANativeActivity, window: ^ndk.ANativeWin
 				// RGBX
 				// XBGR
 				pixel := transmute(^u32)pixels
-				pixel^ = u32(u8(x)) << 24 | u32(u8(y)) << 24
+				pixel^ = u32(u8(x)) | u32(u8(y)) << 16
+
 				pixels = mem.ptr_offset(pixels, 4)
 			}
 		}
@@ -52,14 +53,16 @@ android_main :: proc "c" (app: ^ndk.android_app) {
 	app.onInputEvent = process_input
 
 	for app.destroyRequested == 0 {
-		ndk.ALooper_pollOnce(
+		events: i32
+		pool_source: ^ndk.android_poll_source
+		ident := ndk.ALooper_pollOnce(
 	        0,
 	        nil,
-	        nil,
-			nil
+	        &events,
+			cast(^rawptr)&pool_source
 	    )
-
-
+		if ident >= 0 && pool_source != nil {
+			pool_source.process(app, pool_source)
+		}
 	}
-
 }

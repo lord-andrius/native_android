@@ -1,7 +1,15 @@
 package ndk
 
+import "core:sys/posix"
+
 foreign import android {
 	"system:android",
+}
+
+android_poll_source :: struct {
+	id: i32,
+	app: ^android_app,
+	process: proc"c"(app: ^android_app, source: ^android_poll_source)
 }
 
 app_comand :: enum(i32) {
@@ -122,5 +130,18 @@ android_app :: struct {
 	activityState: app_comand,
 	destroyRequested: i32,
 	// tem mais campos privados mas não iremos precisar deles eu acho :)
-	reserved: [30]u64
+	mutex: posix.pthread_mutex_t,
+	cond: posix.pthread_cond_t,
+	msgread: i32,
+	msgwrite: i32,
+	thread: posix.pthread_t,
+	cmdPollSource: android_poll_source,
+	inputPollSource: android_poll_source,
+	running: i32,
+	stateSaved: i32,
+	redrawNeeded: i32,
+	pendingInputQueue: ^AInputQueue,
+	pendingWindow: ^ANativeWindow,
+	pendingRect: ARect
+
 }
